@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="iSeeGrass admin — review all platform assessments.">
+    <title>Assessments | iSeeGrass Admin</title>
+
+    <link rel="icon" type="image/png" href="../../public/icons/favicon.png">
+
+    <!-- Tabler -->
+    <link rel="stylesheet" href="../../resources/tabler/css/tabler.css">
+    <link rel="stylesheet" href="../../resources/tabler/css/tabler.min.css">
+
+    <!-- Tabler Icons webfont -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.48.0/dist/tabler-icons.min.css">
+
+    <!-- iSeeGrass shared navbar styles -->
+    <link rel="stylesheet" href="../../public/css/users/styles-users.css">
+    <!-- iSeeGrass Admin Theme -->
+    <link rel="stylesheet" href="../../public/css/admin/styles-admin.css">
+    <link rel="stylesheet" href="../../public/css/admin/assessment/styles-admin-assessment.css">
+</head>
+
+<body>
+    <div class="page" id="main-content">
+        <isee-navbar-admin></isee-navbar-admin>
+
+        <div class="page-wrapper">
+            <!-- Page header -->
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <!-- <h2 class="page-title text-primary">&gt; Admin / Assessments</h2> -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+
+                    <div class="admin-card">
+
+                        <!-- Filter bar -->
+                        <div class="admin-filter-bar">
+                            <select id="filterUser" class="admin-select">
+                                <option value="">All Users</option>
+                            </select>
+                            <select id="filterSpecies" class="admin-select">
+                                <option value="">All Species</option>
+                            </select>
+                            <input type="date" id="filterDateFrom" class="admin-input" placeholder="Date from">
+                            <input type="date" id="filterDateTo" class="admin-input" placeholder="Date to">
+                            <select id="filterStatus" class="admin-select">
+                                <option value="">All Status</option>
+                                <option value="draft">Draft</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="finalized">Finalized</option>
+                            </select>
+                            <button id="btnResetFilters" class="admin-btn admin-btn--ghost">Reset</button>
+                        </div>
+
+                        <!-- Table -->
+                        <div class="admin-table-wrapper">
+                            <table class="admin-table" id="assessmentsTable">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Title</th>
+                                        <th>User</th>
+                                        <th>Species</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="assessmentsTableBody">
+                                    <!-- JS-populated; sample rows below -->
+                                    <tr>
+                                        <td>1</td>
+                                        <td>Quadrat Survey — Site A</td>
+                                        <td>Jane Santos</td>
+                                        <td>Enhalus acoroides</td>
+                                        <td><span class="badge badge-green">Finalized</span></td>
+                                        <td>2024-05-12</td>
+                                        <td>
+                                            <button class="admin-btn admin-btn--icon" title="View"
+                                                onclick="openAssessmentDetail(this)">
+                                                <i class="ti ti-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>2</td>
+                                        <td>Transect Belt — Bacolod</td>
+                                        <td>Marco Reyes</td>
+                                        <td>Thalassia hemprichii</td>
+                                        <td><span class="badge badge-yellow">In Progress</span></td>
+                                        <td>2024-06-01</td>
+                                        <td>
+                                            <button class="admin-btn admin-btn--icon" title="View"
+                                                onclick="openAssessmentDetail(this)">
+                                                <i class="ti ti-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>3</td>
+                                        <td>Seagrass Cover Estimate</td>
+                                        <td>Ana Lim</td>
+                                        <td>Halophila ovalis</td>
+                                        <td><span class="badge badge-muted">Draft</span></td>
+                                        <td>2024-06-18</td>
+                                        <td>
+                                            <button class="admin-btn admin-btn--icon" title="View"
+                                                onclick="openAssessmentDetail(this)">
+                                                <i class="ti ti-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        <div class="admin-pagination" id="assessmentsPagination">
+                            <button class="admin-btn admin-btn--ghost" id="btnPrevPage">
+                                <i class="ti ti-chevron-left"></i> Prev
+                            </button>
+                            <span class="admin-page-indicator" id="pageIndicator">Page 1</span>
+                            <button class="admin-btn admin-btn--ghost" id="btnNextPage">
+                                Next <i class="ti ti-chevron-right"></i>
+                            </button>
+                        </div>
+
+                    </div><!-- /.admin-card -->
+
+                </div><!-- /container-xl -->
+            </div><!-- /page-body -->
+        </div><!-- /page-wrapper -->
+    </div><!-- /page -->
+
+    <!-- Read-only assessment detail modal -->
+    <div class="admin-modal-backdrop" id="assessmentDetailModal" hidden>
+        <div class="admin-modal">
+            <div class="admin-modal__header">
+                <h3 class="admin-modal__title" id="modalAssessmentTitle">Assessment Details</h3>
+                <button class="admin-modal__close" onclick="closeAssessmentModal()">
+                    <i class="ti ti-x"></i>
+                </button>
+            </div>
+            <div class="admin-modal__body">
+                <div class="admin-modal__meta-grid">
+                    <div>
+                        <span class="meta-label">User</span>
+                        <span class="meta-value" id="modalUser">—</span>
+                    </div>
+                    <div>
+                        <span class="meta-label">Date</span>
+                        <span class="meta-value" id="modalDate">—</span>
+                    </div>
+                    <div>
+                        <span class="meta-label">Status</span>
+                        <span class="meta-value" id="modalStatus">—</span>
+                    </div>
+                    <div>
+                        <span class="meta-label">Species</span>
+                        <span class="meta-value" id="modalSpecies">—</span>
+                    </div>
+                </div>
+                <div class="admin-modal__content-area" id="modalContent">
+                    <!-- rendered HTML content -->
+                </div>
+            </div>
+            <div class="admin-modal__footer">
+                <button class="admin-btn admin-btn--ghost" onclick="closeAssessmentModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="../../components/navbar-admin.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/js/tabler.min.js"></script>
+    <script type="module" src="../../public/js/admin/assessment/script-admin-assessment.js"></script>
+    <!-- Android back-button handler (no-op on web) -->
+    <script src="/js/back-handler.js"></script>
+
+    <script>
+        function openAssessmentDetail(btn) {
+            const row = btn.closest('tr');
+            document.getElementById('modalAssessmentTitle').textContent = row.cells[1].textContent;
+            document.getElementById('modalUser').textContent    = row.cells[2].textContent;
+            document.getElementById('modalDate').textContent    = row.cells[5].textContent;
+            document.getElementById('modalStatus').textContent  = row.cells[4].querySelector('.badge')?.textContent || row.cells[4].textContent;
+            document.getElementById('modalSpecies').textContent = row.cells[3].textContent;
+            document.getElementById('modalContent').textContent = 'Full assessment content would load here from the database.';
+            document.getElementById('assessmentDetailModal').hidden = false;
+        }
+        function closeAssessmentModal() {
+            document.getElementById('assessmentDetailModal').hidden = true;
+        }
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') closeAssessmentModal();
+        });
+    </script>
+</body>
+
+</html>

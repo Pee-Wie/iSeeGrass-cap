@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - iSeeGrass</title>
+  <link rel="icon" type="image/png" href="../../public/icons/favicon.png" />
+  <link rel="stylesheet" href="../../public/css/auth/login.css" />
+</head>
+
+<body>
+  <div id="signup-map-bg"></div>
+  <div class="wrapper" id="wrapper">
+    <!-- Login Form -->
+    <div class="form-section" id="formSection">
+      <div class="form-box" id="loginForm">
+        <div style="display: flex; align-items: left; margin-bottom: 1.3em;">
+        </div>
+        <div class="row row-deck row-cards">
+          <div class="col-sm-6 col-lg-3">
+            <h2>Login</h2>
+          </div>
+          <div class="col-sm-4 col-lg-2">
+            <a href="../../index.html">Home</a>
+          </div>
+        </div>
+        <form id="loginFormElem" method="POST" autocomplete="off">
+          <div class="input-box">
+            <label for="username">Username:</label>
+            <input type="text" name="username" id="username" placeholder="e.g. JM Reyes" required />
+          </div>
+          <div class="input-box" id="loginPasswordBox">
+            <label for="password">Password:</label>
+            <div class="password-wrapper">
+              <input type="password" name="password" id="password" placeholder="Type your Password here!" required />
+              <button type="button" class="password-toggle" id="passwordToggle" aria-label="Show password" tabindex="-1">
+                <!-- Eye icon (password hidden) -->
+                <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <!-- Eye-off icon (password visible) -->
+                <svg id="eyeOffIcon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              </button>
+            </div>
+            <div class="text">
+                <p>Forgot your password? <a href="#" onclick="toggleForm(); return false;">Reset Password</a></p>
+            </div>
+          </div>
+          <!-- for now thsi button auto,atically redirect to users/index.html -->
+           <!-- <a href="../../views/admin/index.html">admin</a> -->
+           <!-- <a href="../../views/users/index.html">users</a> -->
+          <button class="btn btn-primary" type="submit" name="login_submit" onclick="window.location.href='../../views/admin/index.html'">Sign in</button>
+        </form>
+        <div class="text">
+          <p>Don't have an account? <a href="#" onclick="requestForm(); return false;">Sign Up</a></p>
+        </div>
+      </div>
+
+      <!-- Register Form -->
+      <div class="form-box" id="registerForm" style="display: none;">
+        <div class="row row-deck row-cards">
+          <div class="col-sm-6 col-lg-3">
+            <h5>Reset Password</h5>
+          </div>
+          <div class="col-sm-4 col-lg-2">
+            <a href="../../index.html">Home</a>
+          </div>
+        </div>
+        <form method="POST" autocomplete="off">
+          <div class="input-box">
+            <label for="reset-email">Email:</label>
+            <input type="email" name="email" id="reset-email" placeholder="e.g. jmreyes@example.com" required />
+            <small>Enter the email linked to your account.</small>
+          </div>
+          <div class="input-box">
+            <label for="reset-username">Username</label>
+            <input type="text" name="username" id="reset-username" placeholder="Username associated with the email" required />
+            <small>Use the username connected to that email.</small>
+          </div>
+          <button class="btn btn-primary" type="submit" name="request_reset">Request Reset</button>
+        </form>
+        <div class="text">
+          <p>Remembered it? <a href="#" onclick="toggleForm(); return false;">Sign in</a></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Diagonal Info Panel -->
+    <div class="info-section" id="infoPanel">
+      <div>
+        <h2 class="none" id="infoTitle">“See It."<br>"Identify It."<br>"Understand It.”</h2>
+        <p class="none" id="infoText">Welcome back to iSeeGrass.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Signup Modal - Content loaded dynamically -->
+  <div class="modal-overlay" id="signupModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Request Account Creation</h3>
+        <button class="modal-close" onclick="closeSignupModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="signupFormContainer">
+        <!-- Form will be loaded here dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="../../public/js/auth/login.js"></script>
+  <!-- Android back-button handler (no-op on web) -->
+  <script src="/js/back-handler.js"></script>
+  <script>
+    // Password show/hide toggle
+    (function () {
+      const toggle   = document.getElementById('passwordToggle');
+      const input    = document.getElementById('password');
+      const eyeOn    = document.getElementById('eyeIcon');
+      const eyeOff   = document.getElementById('eyeOffIcon');
+      if (!toggle || !input) return;
+      toggle.addEventListener('click', function () {
+        const isHidden = input.type === 'password';
+        input.type        = isHidden ? 'text' : 'password';
+        eyeOn.style.display  = isHidden ? 'none'  : '';
+        eyeOff.style.display = isHidden ? ''      : 'none';
+        toggle.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "appId": "com.iseegrass.app",
+  "appName": "iSeeGrass",
+  "webDir": "www",
+  "server": {
+    "url": "https://iseegrass.page.gd",
+    "cleartext": false
+  }
+}

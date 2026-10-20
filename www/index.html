@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="iSeeGrass is a web and mobile application for seagrass species identification and assessment using image recognition and CNN classification.">
+  <title>iSeeGrass | Seagrass Species Identification</title>
+
+  <!--
+    Auth session restore — MUST be first in <head>, before any CSS or JS loads.
+    If the user is still logged in (localStorage has isee_user with a role),
+    redirect them straight to their dashboard. This fires before any paint,
+    preventing the landing page from flashing before the redirect.
+    Covers Android app reopen (Capacitor always loads root URL on launch).
+  -->
+  <script>
+    (function () {
+      try {
+        var raw = localStorage.getItem('isee_user');
+        if (!raw) return;
+        var user = JSON.parse(raw);
+        if (!user || !user.role) return;
+        var dest = user.role === 'admin'
+          ? '/views/admin/index.html'
+          : '/views/users/index.html';
+        window.location.replace(dest);
+      } catch (_) {
+        // Corrupt localStorage — stay on landing page
+      }
+    })();
+  </script>
+
+  <!-- iSeeGrass Default Theme -->
+  <link rel="stylesheet" href="../../resources/tabler/css/tabler.css">
+  <link rel="stylesheet" href="../../resources/tabler/css/tabler.min.css">
+  
+  <!-- Tabler -->
+  <link rel="icon" type="image/png" href="public/icons/favicon.png">
+  <link rel="stylesheet" href="public/css/styles.css">
+
+</head>
+<body>
+  <isee-header></isee-header>
+
+  <main class="container">
+    <section class="hero">
+      <p class="eyebrow">INTRODUCING iSeeGrass</p>
+      <h1>Smart seagrass identification and assessment for marine research</h1>
+      <p class="lead">iSeeGrass uses image-based processing and convolutional neural network classification to automate seagrass species identification from field images. The species library covers an estimated 60–72 species worldwide, while the identification model is trained and focused on species found in the <strong>Negros region</strong>. It supports researchers, students, and marine practitioners with accurate recognition, structured reporting, and faster data collection.</p>
+      <div class="hero-actions">
+        <a href="#about" class="btn btn-primary">Learn More</a>
+        <a href="#features" class="btn btn-secondary">Key Benefits</a>
+        <a href="public/explore.html" class="btn btn-secondary">Explore</a>
+      </div>
+    </section>
+
+    <section id="about" class="section">
+      <h2>About the System</h2>
+      <p>To address the challenges of manual seagrass identification, iSeeGrass proposes a hybrid web and mobile platform that brings automated species recognition into the field. The species information library covers an estimated 60–72 seagrass species worldwide — providing broad reference data for researchers and students. The CNN-based identification model, however, is trained and scoped specifically to species documented in the <strong>Negros region</strong>, keeping its classification focused and accurate for local field use.</p>
+      <p>With image recognition and CNN-powered classification, iSeeGrass delivers structured outputs that support data recording, analysis, and more effective assessment practices in marine research.</p>
+    </section>
+
+    <section id="features" class="section">
+      <h2>Why iSeeGrass?</h2>
+      <div class="grid features">
+        <article class="card">
+          <h3>Automated Species Identification</h3>
+          <p>Capture a field image and let the system classify seagrass species using advanced CNN models trained for marine vegetation.</p>
+        </article>
+        <article class="card">
+          <h3>Structured Data Output</h3>
+          <p>Save consistent, formatted results that make it easy to analyze observations, track trends, and generate reports.</p>
+        </article>
+        <article class="card">
+          <h3>Research-Ready Tool</h3>
+          <p>Designed for researchers, students, and marine practitioners, iSeeGrass improves accuracy and accelerates seagrass assessment workflows.</p>
+        </article>
+        <article class="card">
+          <h3>Field-Focused Usability</h3>
+          <p>Built as a web and mobile-ready application, it supports in-situ data capture with an intuitive interface and clear, actionable output.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>How it helps</h2>
+      <div class="grid" style="grid-template-columns: 1fr; gap: 1rem;">
+        <div class="card">
+          <h3 class="highlight">Reduce manual effort</h3>
+          <p>By automating species identification, iSeeGrass allows field teams to focus on data collection and interpretation instead of tedious manual classification.</p>
+        </div>
+        <div class="card">
+          <h3 class="highlight">Improve consistency</h3>
+          <p>Standardized image-based assessments help eliminate subjective variation, resulting in more reliable seagrass monitoring data.</p>
+        </div>
+        <div class="card">
+          <h3 class="highlight">Support better decisions</h3>
+          <p>Accurate species recognition and assessment-ready outputs empower better planning, conservation work, and academic research.</p>
+        </div>
+      </div>
+    </section>
+
+    <isee-wp-site-footer></isee-wp-site-footer>
+  </main>
+
+  <script type="module" src="components/wp-site-header.js"></script>
+  <script type="module" src="components/wp-site-footer.js"></script>
+  <!-- Android back-button handler (no-op on web) -->
+  <script src="/js/back-handler.js"></script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+.git/
+android/
+assets/guides/
+node_modules/
+
+.env
+.env.railway
+gitguide.md
+nohup.out
