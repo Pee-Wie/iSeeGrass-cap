@@ -46,9 +46,15 @@ function loadEnv(string $path): void
     }
 }
 
-// Resolve the project root: env.php is at core/config/, root is two levels up
-$projectRoot = dirname(__DIR__, 2);   // /media/codex/Shared/iSeeGrass
-loadEnv($projectRoot . '/.env');
+// Resolve the .env path.
+// On Railway (or any host with real env injection), set APP_ENV_FILE to an empty
+// string or a specific path — loadEnv() will either skip the empty path or load
+// from the explicit location. Railway injects variables natively so no file is needed.
+// On local XAMPP, APP_ENV_FILE is unset, so we fall back to two levels up from
+// core/config/ which resolves to the project root where .env lives.
+$projectRoot = dirname(__DIR__, 2);   // /media/codex/Shared/iSeeGrass (local) or DocumentRoot (production)
+$envFile     = getenv('APP_ENV_FILE') ?: ($projectRoot . '/.env');
+loadEnv($envFile);
 
 /**
  * Convenience wrapper — reads from $_ENV with an optional default.
