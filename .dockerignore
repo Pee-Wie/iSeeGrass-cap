@@ -7,7 +7,6 @@
 .agents
 .context
 .kiro
-docker/
 node_modules/
 android/
 native-app/
