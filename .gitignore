@@ -5,5 +5,7 @@ node_modules/
 
 .env
 .env.railway
+package.json
+package-lock.json
 gitguide.md
 nohup.out
