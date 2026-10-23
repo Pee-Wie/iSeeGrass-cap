@@ -153,7 +153,7 @@ class IdentificationModel
     ): int {
         $stmt = $this->pdo->prepare(
             'INSERT INTO identification_results
-               (identification_id, species_id, scientific_name, common_name, confidence, rank)
+               (identification_id, species_id, scientific_name, common_name, confidence, `rank`)
              VALUES
                (:ident_id, :species_id, :scientific_name, :common_name, :confidence, :rank)'
         );
@@ -176,7 +176,7 @@ class IdentificationModel
         $stmt = $this->pdo->prepare(
             'SELECT * FROM identification_results
               WHERE identification_id = :ident_id
-              ORDER BY rank ASC'
+              ORDER BY `rank` ASC'
         );
         $stmt->execute([':ident_id' => $identificationId]);
         return $stmt->fetchAll();
