@@ -8,31 +8,25 @@
  *
  * Also starts output buffering so any accidental PHP notice/warning
  * doesn't corrupt the JSON response body.
- */
-
-// Start output buffer immediately — discards any stray output before JSON is sent.
-// The buffer is flushed naturally when the script ends or when a header is sent.
-ob_start();
- *
- * Without this, the browser's preflight OPTIONS request hits the auth
- * middleware, gets a 401 with no CORS headers, and fetch() throws a
- * network error (not a JSON error) on the client.
  *
  * APP_URL in .env is always added to the allowed-origins list so the
  * live deployment never needs a code change — only a .env update.
  */
+
+// Start output buffer immediately — discards any stray output before JSON is sent.
+ob_start();
 
 // Load environment variables so APP_URL is available.
 // env.php is idempotent; requiring it here is safe even if db.php already
 // loaded it earlier (PHP's require_once deduplicates by resolved path).
 require_once __DIR__ . '/env.php';
 
-$appUrl = rtrim(env('APP_URL', ''), '/');   // e.g. https://iseegrass.page.gd
+$appUrl = rtrim(env('APP_URL', ''), '/');   // e.g. https://iseegrass-cap-development.up.railway.app
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
 $allowed = array_filter([
-    $appUrl,                        // live domain from .env  ← key addition
+    $appUrl,                        // live domain from .env
     'http://localhost:3000',
     'http://localhost',
     'http://127.0.0.1',
