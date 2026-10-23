@@ -66,10 +66,6 @@ require_once __DIR__ . '/../app/models/SessionModel.php';
 require_once __DIR__ . '/../app/models/UserModel.php';
 require_once __DIR__ . '/../app/models/IdentificationModel.php';
 
-// Temporary: expose runtime errors to diagnose 500
-ini_set('display_errors', '1');
-error_reporting(E_ALL);
-
 requireMethod('POST');
 
 // ── Allowed model_type values ─────────────────────────────────────────────────

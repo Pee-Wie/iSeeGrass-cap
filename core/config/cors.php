@@ -17,16 +17,18 @@
 ob_start();
 
 // Load environment variables so APP_URL is available.
-// env.php is idempotent; requiring it here is safe even if db.php already
-// loaded it earlier (PHP's require_once deduplicates by resolved path).
 require_once __DIR__ . '/env.php';
 
-$appUrl = rtrim(env('APP_URL', ''), '/');   // e.g. https://iseegrass-cap-development.up.railway.app
+// Normalise APP_URL — ensure it has a scheme so origin comparisons work.
+$appUrl = rtrim((string) env('APP_URL', ''), '/');
+if ($appUrl !== '' && !str_starts_with($appUrl, 'http')) {
+    $appUrl = 'https://' . $appUrl;
+}
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
 $allowed = array_filter([
-    $appUrl,                        // live domain from .env
+    $appUrl,
     'http://localhost:3000',
     'http://localhost',
     'http://127.0.0.1',
@@ -34,13 +36,19 @@ $allowed = array_filter([
     'capacitor://localhost',
 ]);
 
-if ($origin !== '' && in_array($origin, $allowed, true)) {
+// Check exact match first.
+// Fallback: also allow any *.up.railway.app origin (covers Railway preview URLs).
+$originAllowed = ($origin !== '' && in_array($origin, $allowed, true))
+    || ($origin !== '' && preg_match('/^https:\/\/[a-z0-9-]+\.up\.railway\.app$/', $origin));
+
+if ($originAllowed) {
     header("Access-Control-Allow-Origin: {$origin}");
-} else {
-    // No Origin header (same-origin curl / direct PHP call).
-    // Fall back to the configured app URL so the default is never localhost
-    // on a production server.
+} elseif ($appUrl !== '') {
+    // Same-origin server-side call (no Origin header) or unknown origin —
+    // reflect the configured app URL.
     header("Access-Control-Allow-Origin: {$appUrl}");
+} else {
+    header('Access-Control-Allow-Origin: *');
 }
 
 header('Access-Control-Allow-Credentials: true');
@@ -49,7 +57,7 @@ header('Access-Control-Allow-Headers: Content-Type, X-Requested-With');
 header('Access-Control-Max-Age: 600');
 
 // Answer preflight immediately — no auth, no DB
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
     http_response_code(204);
     exit;
 }
