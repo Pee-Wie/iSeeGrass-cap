@@ -6,9 +6,13 @@ RUN docker-php-ext-install mysqli pdo pdo_mysql
 # ── PHP production settings ───────────────────────────────────────────────────
 # Disable display_errors so warnings never corrupt JSON API responses.
 # Log errors instead (visible in Railway deploy logs via stderr).
-RUN echo "display_errors = Off" >> /usr/local/etc/php/conf.d/iseegrass.ini \
- && echo "log_errors = On"      >> /usr/local/etc/php/conf.d/iseegrass.ini \
- && echo "error_log = /dev/stderr" >> /usr/local/etc/php/conf.d/iseegrass.ini
+# Raise upload limits for seagrass photos (default 2MB is too small).
+RUN echo "display_errors = Off"        >> /usr/local/etc/php/conf.d/iseegrass.ini \
+ && echo "log_errors = On"             >> /usr/local/etc/php/conf.d/iseegrass.ini \
+ && echo "error_log = /dev/stderr"     >> /usr/local/etc/php/conf.d/iseegrass.ini \
+ && echo "upload_max_filesize = 20M"   >> /usr/local/etc/php/conf.d/iseegrass.ini \
+ && echo "post_max_size = 22M"         >> /usr/local/etc/php/conf.d/iseegrass.ini \
+ && echo "max_execution_time = 120"    >> /usr/local/etc/php/conf.d/iseegrass.ini
 
 # ── Apache config ─────────────────────────────────────────────────────────────
 # Enable mod_rewrite and mod_alias (needed for Alias directive)
