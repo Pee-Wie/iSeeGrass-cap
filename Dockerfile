@@ -3,6 +3,13 @@ FROM php:8.2-apache-bullseye
 # ── PHP extensions ────────────────────────────────────────────────────────────
 RUN docker-php-ext-install mysqli pdo pdo_mysql
 
+# ── PHP production settings ───────────────────────────────────────────────────
+# Disable display_errors so warnings never corrupt JSON API responses.
+# Log errors instead (visible in Railway deploy logs via stderr).
+RUN echo "display_errors = Off" >> /usr/local/etc/php/conf.d/iseegrass.ini \
+ && echo "log_errors = On"      >> /usr/local/etc/php/conf.d/iseegrass.ini \
+ && echo "error_log = /dev/stderr" >> /usr/local/etc/php/conf.d/iseegrass.ini
+
 # ── Apache config ─────────────────────────────────────────────────────────────
 # Enable mod_rewrite and mod_alias (needed for Alias directive)
 RUN a2enmod rewrite alias

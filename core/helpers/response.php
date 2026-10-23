@@ -14,6 +14,7 @@
  */
 function jsonSuccess(mixed $data = null, int $status = 200): never
 {
+    ob_end_clean(); // discard any stray output before sending JSON
     http_response_code($status);
     header('Content-Type: application/json');
 
@@ -35,6 +36,7 @@ function jsonSuccess(mixed $data = null, int $status = 200): never
  */
 function jsonError(string $message, int $status = 400, array $extra = []): never
 {
+    ob_end_clean(); // discard any stray output before sending JSON
     http_response_code($status);
     header('Content-Type: application/json');
 

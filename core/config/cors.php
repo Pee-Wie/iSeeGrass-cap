@@ -6,6 +6,14 @@
  * Sends CORS headers and handles OPTIONS preflight immediately —
  * before any auth check, DB connection, or other logic runs.
  *
+ * Also starts output buffering so any accidental PHP notice/warning
+ * doesn't corrupt the JSON response body.
+ */
+
+// Start output buffer immediately — discards any stray output before JSON is sent.
+// The buffer is flushed naturally when the script ends or when a header is sent.
+ob_start();
+ *
  * Without this, the browser's preflight OPTIONS request hits the auth
  * middleware, gets a 401 with no CORS headers, and fetch() throws a
  * network error (not a JSON error) on the client.
