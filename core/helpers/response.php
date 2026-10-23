@@ -14,7 +14,10 @@
  */
 function jsonSuccess(mixed $data = null, int $status = 200): never
 {
-    ob_end_clean(); // discard any stray output before sending JSON
+    // Discard any buffered output (started in cors.php) before sending JSON.
+    if (ob_get_level() > 0) {
+        ob_end_clean();
+    }
     http_response_code($status);
     header('Content-Type: application/json');
 
@@ -36,7 +39,10 @@ function jsonSuccess(mixed $data = null, int $status = 200): never
  */
 function jsonError(string $message, int $status = 400, array $extra = []): never
 {
-    ob_end_clean(); // discard any stray output before sending JSON
+    // Discard any buffered output (started in cors.php) before sending JSON.
+    if (ob_get_level() > 0) {
+        ob_end_clean();
+    }
     http_response_code($status);
     header('Content-Type: application/json');
 
