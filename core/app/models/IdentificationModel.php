@@ -97,6 +97,18 @@ class IdentificationModel
     }
 
     /**
+     * Return the total number of identification runs for one user.
+     */
+    public function countByUser(int $userId): int
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT COUNT(*) FROM identifications WHERE user_id = :uid'
+        );
+        $stmt->execute([':uid' => $userId]);
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
      * Return identification history for one user, newest first.
      */
     public function getByUser(int $userId, int $limit = 20, int $offset = 0): array

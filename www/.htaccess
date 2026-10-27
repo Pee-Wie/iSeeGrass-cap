@@ -69,6 +69,9 @@ AddType application/javascript .js .mjs
     RewriteRule ^api/users/change_password$             core/api/users/change_password.php [QSA,L]
     RewriteRule ^api/users/avatar$                      core/api/users/avatar.php [QSA,L]
     RewriteRule ^api/users/show$                        core/api/users/show.php [QSA,L]
+
+    # Catalog (seagrass species)
+    RewriteRule ^api/catalog$                           core/api/catalog.php [QSA,L]
 </IfModule>
 
 # ── Block sensitive paths from browser access ────────────────────────────────
