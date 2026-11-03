@@ -47,6 +47,7 @@
  *     "success": true,
  *     "data": {
  *       "identification_id": 42,              // null for guests
+ *       "image_url":         "/public/uploads/identifications/...", // null for guests
  *       "model_type":        "improved_original",
  *       "top_result":        "Halophila spinulosa",
  *       "top_confidence":    94.25,           // percent
@@ -147,6 +148,12 @@ if (!move_uploaded_file($_FILES['image']['tmp_name'], $tempPath)) {
     jsonError('Failed to save uploaded image.', 500);
 }
 
+register_shutdown_function(static function () use ($tempPath): void {
+    if (is_file($tempPath)) {
+        @unlink($tempPath);
+    }
+});
+
 // ── Check CNN_API_URL is configured ──────────────────────────────────────────
 $cnnapiUrl = rtrim((string) env('CNN_API_URL', ''), '/');
 
@@ -180,9 +187,6 @@ $rawResponse = curl_exec($ch);
 $httpCode    = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 $curlError   = curl_error($ch);
 curl_close($ch);
-
-// Clean up temp file regardless of outcome
-@unlink($tempPath);
 
 // ── Handle cURL / HTTP errors ─────────────────────────────────────────────────
 if ($rawResponse === false || $curlError) {
@@ -248,8 +252,19 @@ usort($scores, fn($a, $b) => $b['confidence'] <=> $a['confidence']);
 
 // ── Persist to DB for authenticated users ────────────────────────────────────
 $identificationId = null;
+$imagePath = null;
 
 if ($currentUser !== null) {
+    $imageDir = __DIR__ . '/../../www/public/uploads/identifications';
+    if (!is_dir($imageDir) && !mkdir($imageDir, 0755, true) && !is_dir($imageDir)) {
+        jsonError('Identification image directory could not be created.', 500);
+    }
+
+    $imagePath = bin2hex(random_bytes(16)) . '.' . $ext;
+    if (!copy($tempPath, $imageDir . '/' . $imagePath)) {
+        jsonError('Failed to save identification image.', 500);
+    }
+
     $pdo   = $pdo ?? getDB();
     $model = new IdentificationModel($pdo);
 
@@ -260,7 +275,8 @@ if ($currentUser !== null) {
         $title,           // optional run title
         $topLabel,
         $topConfidence,
-        $activeTrack      // model_type — stored for history/reporting
+        $activeTrack,     // model_type — stored for history/reporting
+        $imagePath
     );
 
     $rank = 1;
@@ -282,8 +298,13 @@ if ($currentUser !== null) {
 }
 
 // ── Return result ─────────────────────────────────────────────────────────────
+@unlink($tempPath);
+
 jsonSuccess([
     'identification_id' => $identificationId,
+    'image_url'         => $imagePath !== null
+        ? '/public/uploads/identifications/' . rawurlencode($imagePath)
+        : null,
     'model_type'        => $activeTrack,
     'top_result'        => $topLabel,
     'top_confidence'    => $topConfidence,

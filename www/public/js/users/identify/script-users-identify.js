@@ -22,6 +22,7 @@
 import { identifyImage, findCatalogMatch } from '../../api/identify.api.js';
 import { drain, OfflineQueuedError } from '../../utils/identify-queue.js';
 import { saveCollectorPhoto, updateCollectorPhotoLabel, removeCollectorPhoto, clearCollectorPhotos, restoreCollectorPhotos } from '../../utils/photo-collector-store.js';
+import { assetUrl } from '../../config/api.config.js';
 
 function getCollectorUserId() {
   try {
@@ -402,10 +403,12 @@ identifyBtn.addEventListener('click', async () => {
 
   try {
     const result = await identifyImage(target.file, idTitle, null, false, histId);
+    usePersistedImage(result.image_url);
     renderIdentifyResults(result);
     if (window.identifyHistory) {
       window.identifyHistory.update(histId, {
         dbId:       result.identification_id ?? null,
+        ...(result.image_url ? { thumbUrl: assetUrl(result.image_url) } : {}),
         topSpecies: result.top_result  || '—',
         confidence: result.top_confidence ?? (result.scores?.[0]?.confidence ?? 0),
         title:      result.title ?? idTitle,
@@ -478,6 +481,19 @@ function loadDirectPhoto(file) {
   renderDirectPreview();
 }
 
+function usePersistedImage(imageUrl) {
+  const image = document.querySelector('#directPreview .direct-preview__img');
+  const remoteUrl = assetUrl(imageUrl);
+  if (!image || !remoteUrl || !directPhoto) return;
+
+  const localUrl = directPhoto.url;
+  image.onerror = () => {
+    image.onerror = null;
+    image.src = localUrl;
+  };
+  image.src = remoteUrl;
+}
+
 function renderDirectPreview() {
   const prompt  = document.getElementById('uploadPrompt');
   let   preview = document.getElementById('directPreview');
@@ -535,10 +551,12 @@ function renderDirectPreview() {
 
       try {
         const result = await identifyImage(directPhoto.file, idTitle, null, false, histId);
+        usePersistedImage(result.image_url);
         renderIdentifyResults(result);
         if (window.identifyHistory) {
           window.identifyHistory.update(histId, {
             dbId:       result.identification_id ?? null,
+            ...(result.image_url ? { thumbUrl: assetUrl(result.image_url) } : {}),
             topSpecies: result.top_result  || '—',
             confidence: result.top_confidence ?? (result.scores?.[0]?.confidence ?? 0),
             title:      result.title ?? idTitle,
@@ -930,6 +948,7 @@ function onDrainResult(histId, result, err, file) {
     if (result) {
       window.identifyHistory.update(histId, {
         dbId:       result.identification_id ?? null,
+        ...(result.image_url ? { thumbUrl: assetUrl(result.image_url) } : {}),
         topSpecies: result.top_result  || '—',
         confidence: result.top_confidence ?? (result.scores?.[0]?.confidence ?? 0),
         title:      result.title ?? null,
@@ -953,6 +972,7 @@ function onDrainResult(histId, result, err, file) {
   if (result && file) {
     // loadDirectPhoto shows the image in the preview panel
     loadDirectPhoto(file);
+    usePersistedImage(result.image_url);
     // renderIdentifyResults inserts the result panel after mainBody
     renderIdentifyResults(result);
     // Catalog lookup deferred so the result panel paints first

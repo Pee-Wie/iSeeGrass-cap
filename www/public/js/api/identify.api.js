@@ -5,6 +5,7 @@
  * response normalised to our internal shape:
  *   {
  *     identification_id: number | null,   // null for guests
+ *     image_url:         string | null,   // stored source image URL for authenticated users
  *     model_type:        string,          // active engine track key
  *     top_result:        string,          // species_name from verdict
  *     top_confidence:    number,          // percent 0–100

@@ -66,6 +66,7 @@ CREATE TABLE IF NOT EXISTS identifications (
     id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id         INT UNSIGNED NOT NULL,
     image_count     TINYINT UNSIGNED NOT NULL DEFAULT 1,
+    image_path      VARCHAR(255) DEFAULT NULL,
     top_result      VARCHAR(120) DEFAULT NULL,
     top_confidence  DECIMAL(5,2) DEFAULT NULL,
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

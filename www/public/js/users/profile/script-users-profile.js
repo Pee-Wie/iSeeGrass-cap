@@ -8,7 +8,7 @@
 import { me }                         from '../../api/auth.api.js';
 import { updateUser, changePassword } from '../../api/users.api.js';
 import { get, upload }                from '../../api/client.js';
-import { apiUrl }                     from '../../config/api.config.js';
+import { apiUrl, assetUrl }            from '../../config/api.config.js';
 
 // ── Current user (set after me()) ─────────────────────────────────────────────
 let currentUser = null;
@@ -88,7 +88,7 @@ $('avatarInput')?.addEventListener('change', async () => {
 
   try {
     const data = await upload('/users/avatar', fd);
-    const url  = data.avatar_url ?? null;
+    const url  = assetUrl(data.avatar_url);
     applyAvatar(url);
     if (currentUser) currentUser.avatar_url = url;
     showToast('Profile picture updated.');
@@ -392,7 +392,7 @@ window.addEventListener('offline', () => applyOfflineState(true));
     currentUser = await me();
     populateForm(currentUser);
     renderJoinedSince(currentUser.created_at);
-    applyAvatar(currentUser.avatar_url ?? null);
+    applyAvatar(assetUrl(currentUser.avatar_url));
     loadStats();
   } catch {
     // me() will redirect to login on 401

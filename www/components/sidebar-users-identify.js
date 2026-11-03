@@ -1,3 +1,5 @@
+import { assetUrl } from '../public/js/config/api.config.js';
+
 /**
  * <isee-identify-history> — Identification History Sidebar
  *
@@ -13,7 +15,7 @@
  *     id:         string,          // unique run ID  (e.g. crypto.randomUUID())
  *     timestamp:  number,          // Date.now()
  *     fileName:   string,          // original filename
- *     thumbUrl:   string,          // object URL for the thumbnail
+ *     thumbUrl:   string|null,     // object URL or persisted image URL
  *     topSpecies: string,          // top predicted species name
  *     confidence: number,          // 0–100 confidence %
  *     status:     'pending'        // | 'done' | 'error'
@@ -236,6 +238,7 @@ class ISeeIdentifyHistory extends HTMLElement {
         if (existing) {
           // Refresh the card in place — e.g. title may have changed
           Object.assign(existing, {
+            thumbUrl:   assetUrl(rec.image_url),
             topSpecies: rec.top_result    ?? '—',
             confidence: rec.top_confidence ?? 0,
             title:      rec.title ?? null,
@@ -279,10 +282,10 @@ class ISeeIdentifyHistory extends HTMLElement {
   }
 
   /**
-   * Insert a history card sourced from a DB record (no live thumbnail).
+   * Insert a history card sourced from a DB record.
    * Uses the DB row `id` as `_seq` so the number is stable across reloads.
    *
-   * @param {{ id:number, image_filename:string|null, top_result:string|null,
+   * @param {{ id:number, image_filename:string|null, image_url:string|null, top_result:string|null,
    *           top_confidence:number|null, created_at:string }} rec
    */
   _pushPersisted(rec) {
@@ -294,7 +297,7 @@ class ISeeIdentifyHistory extends HTMLElement {
                     ? new Date(rec.created_at).getTime()
                     : Date.now(),
       fileName:   rec.image_filename ?? '(unknown)',
-      thumbUrl:   null,                    // no thumbnail for persisted records
+      thumbUrl:   assetUrl(rec.image_url),
       topSpecies: rec.top_result    ?? '—',
       confidence: rec.top_confidence ?? 0,
       title:      rec.title ?? null,

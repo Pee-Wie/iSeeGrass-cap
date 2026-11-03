@@ -14,11 +14,8 @@
 
 const IS_CAPACITOR = window.location.protocol === 'capacitor:';
 
-// Detect whether we're running on the live InfinityFree deployment.
-// On the server, the frontend and backend share the same origin, so there
-// is no cross-origin call and we can use a root-relative path.
-// Locally (localhost / 127.0.0.1), PHP is on XAMPP Apache, so we point
-// cross-origin at Apache even when the static frontend is on port 3000.
+// Detect whether we're running on the live deployment. On production, the
+// frontend and backend share the same origin. Local web development uses XAMPP.
 const IS_LOCAL = window.location.hostname === 'localhost' ||
                  window.location.hostname === '127.0.0.1';
 
@@ -45,4 +42,16 @@ export function apiUrl(path) {
   const queryPart = qIdx === -1 ? ''    : clean.slice(qIdx);   // includes '?'
 
   return `${BASE_URL}/core/api/${filePart}.php${queryPart}`;
+}
+
+/**
+ * Resolve a public asset path against the backend origin.
+ * Uploaded files are served by the API host, which may differ from the
+ * origin serving the web client.
+ *
+ * @param {string|null|undefined} path
+ * @returns {string|null}
+ */
+export function assetUrl(path) {
+  return path ? new URL(path, `${BASE_URL}/`).href : null;
 }

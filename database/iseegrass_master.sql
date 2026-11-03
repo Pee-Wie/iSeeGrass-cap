@@ -134,6 +134,8 @@ CREATE TABLE IF NOT EXISTS identifications (
     image_count     TINYINT UNSIGNED    NOT NULL DEFAULT 1,
     image_filename  VARCHAR(255)        DEFAULT NULL
                     COMMENT 'Original filename of the uploaded image',
+    image_path      VARCHAR(255)        DEFAULT NULL
+                    COMMENT 'Stored identification image filename in public uploads',
     title           VARCHAR(120)        DEFAULT NULL,
     top_result      VARCHAR(120)        DEFAULT NULL,
     top_confidence  DECIMAL(5,2)        DEFAULT NULL,
