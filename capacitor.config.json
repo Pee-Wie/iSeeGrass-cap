@@ -3,7 +3,7 @@
   "appName": "iSeeGrass",
   "webDir": "www",
   "server": {
-    "url": "https://iseegrass.page.gd",
+    "url": "https://iseegrass-res.up.railway.app",
     "cleartext": false
   }
 }

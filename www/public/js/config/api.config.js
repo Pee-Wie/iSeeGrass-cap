@@ -4,26 +4,21 @@
  * Central API configuration. Every module that calls the backend
  * imports BASE_URL from here — change it once, it applies everywhere.
  *
- * Dev  : http://localhost/iSeeGrass          (XAMPP/LAMPP with project in htdocs)
- * Dev  : http://localhost:8000               (PHP built-in server from project root)
- * Prod : https://yourdomain.com              (update before release)
- *
- * Capacitor Android uses capacitor://localhost as origin; the PHP server
- * must be reachable from the device/emulator (usually the machine's LAN IP).
+ * Development uses the local PHP project. All deployed/native clients use
+ * the same Railway API so assessment changes are shared across clients.
  */
 
 const IS_CAPACITOR = window.location.protocol === 'capacitor:';
-
-// Detect whether we're running on the live deployment. On production, the
-// frontend and backend share the same origin. Local web development uses XAMPP.
-const IS_LOCAL = window.location.hostname === 'localhost' ||
-                 window.location.hostname === '127.0.0.1';
+const IS_LOCAL = !IS_CAPACITOR && (
+  window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1'
+);
 
 export const BASE_URL = IS_CAPACITOR
-  ? 'http://10.0.2.2/iSeeGrass'       // Android emulator → host machine localhost
+  ? 'http://10.0.2.2/iSeeGrass'
   : IS_LOCAL
-    ? 'http://localhost/iSeeGrass'     // Dev web → XAMPP Apache
-    : window.location.origin;          // Production: same origin, no CORS needed
+    ? 'http://localhost/iSeeGrass'
+    : 'https://iseegrass-res.up.railway.app';
 
 /**
  * Build a full API path.
