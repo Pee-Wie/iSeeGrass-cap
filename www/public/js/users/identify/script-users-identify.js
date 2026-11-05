@@ -7,8 +7,7 @@
  *   • Inline rename (format: newName(originalName).ext)
  *   • Direct-upload panel (left 75%) — bypasses the PC
  *   • Drag from PC thumbnail → left panel
- *   • Camera modal (getUserMedia with front/back switch + shutter)
- *   • Fallback to native <input capture="environment"> when no getUserMedia
+ *   • Native camera capture on Capacitor; live camera modal in browsers
  *
  * Offline queueing:
  *   When there is no network connection, identification requests are stored in
@@ -27,7 +26,7 @@ import { assetUrl } from '../../config/api.config.js';
 function getCollectorUserId() {
   try {
     const u = JSON.parse(localStorage.getItem('isee_user'));
-    return u?.id ?? null;
+    return u?.id === null || u?.id === undefined ? null : String(u.id);
   } catch { return null; }
 }
 
@@ -99,9 +98,15 @@ function getEntry(url) {
 
 // ─── Add photos to the collector ─────────────────────────────────
 
-function addPhotos(files) {
+async function addPhotos(files) {
   const remaining = MAX_PHOTOS - photos.length;
   const accepted  = Array.from(files).slice(0, remaining);
+  const userId = getCollectorUserId();
+
+  if (userId === null) {
+    showToastMessage('Your photo could not be saved. Sign in again and retry.', 4500);
+    return;
+  }
 
   for (const file of accepted) {
     if (!file.type.startsWith('image/')) continue;
@@ -110,23 +115,31 @@ function addPhotos(files) {
       continue;
     }
 
-    const url      = URL.createObjectURL(file);
     const dotIdx   = file.name.lastIndexOf('.');
     const origName = dotIdx !== -1 ? file.name.slice(0, dotIdx) : file.name;
     const ext      = dotIdx !== -1 ? file.name.slice(dotIdx)     : '';
 
-    const entry = { uuid: crypto.randomUUID(), file, url, label: origName, originalName: origName, ext, selected: false };
+    const entry = { uuid: crypto.randomUUID(), file, label: origName, originalName: origName, ext, selected: false };
+    try {
+      await saveCollectorPhoto({
+        uuid:         entry.uuid,
+        userId,
+        imageBlob:    file,
+        mimeType:     file.type,
+        originalName: origName,
+        label:        origName,
+        ext,
+        addedAt:      Date.now(),
+      });
+    } catch (error) {
+      console.error('Could not persist photo in the Photo Collection.', error);
+      showToastMessage(`"${file.name}" could not be saved. Check device storage and try again.`, 4500);
+      continue;
+    }
+
+    const url = URL.createObjectURL(file);
+    entry.url = url;
     photos.push(entry);
-    saveCollectorPhoto({
-      uuid:         entry.uuid,
-      userId:       getCollectorUserId(),
-      imageBlob:    entry.file,
-      mimeType:     entry.file.type,
-      originalName: entry.originalName,
-      label:        entry.label,
-      ext:          entry.ext,
-      addedAt:      Date.now(),
-    }).catch(() => {}); // non-blocking, fire and forget
     renderThumb(url);
   }
 
@@ -302,7 +315,10 @@ function startRename(url, wrap) {
     entry.label = newLabel;
 
     if (entry.uuid) {
-      updateCollectorPhotoLabel(entry.uuid, newLabel).catch(() => {});
+      updateCollectorPhotoLabel(entry.uuid, newLabel).catch(error => {
+        console.error('Could not save the photo label.', error);
+        showToastMessage('The new photo name could not be saved.', 3500);
+      });
     }
 
     const newLabelEl = document.createElement('span');
@@ -326,22 +342,34 @@ function startRename(url, wrap) {
 
 // ─── Remove / clear ───────────────────────────────────────────────
 
-function removePhoto(url) {
+async function removePhoto(url) {
   const entry = getEntry(url);
-  if (entry) {
-    URL.revokeObjectURL(entry.url);
-    if (entry.uuid) {
-      removeCollectorPhoto(entry.uuid).catch(() => {});
-    }
+  if (!entry) return;
+
+  try {
+    await removeCollectorPhoto(entry.uuid);
+  } catch (error) {
+    console.error('Could not remove photo from the Photo Collection.', error);
+    showToastMessage('The photo could not be removed from saved collection.', 3500);
+    return;
   }
+
+  URL.revokeObjectURL(entry.url);
   photos = photos.filter(p => p.url !== url);
   const thumb = photoGrid.querySelector(`[data-url="${CSS.escape(url)}"]`);
   if (thumb) thumb.remove();
   updateUI();
 }
 
-function clearAll() {
-  clearCollectorPhotos(getCollectorUserId()).catch(() => {});
+async function clearAll() {
+  try {
+    await clearCollectorPhotos(getCollectorUserId());
+  } catch (error) {
+    console.error('Could not clear the Photo Collection.', error);
+    showToastMessage('The saved Photo Collection could not be cleared.', 3500);
+    return;
+  }
+
   photos.forEach(p => URL.revokeObjectURL(p.url));
   photos = [];
   photoGrid.innerHTML = '';
@@ -351,8 +379,8 @@ function clearAll() {
 
 // ─── Event wiring – collector ─────────────────────────────────────
 
-fileInput.addEventListener('change', () => {
-  if (fileInput.files.length) addPhotos(fileInput.files);
+fileInput.addEventListener('change', async () => {
+  if (fileInput.files.length) await addPhotos(fileInput.files);
   fileInput.value = '';
 });
 
@@ -364,7 +392,7 @@ dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-ove
 dropzone.addEventListener('drop', e => {
   e.preventDefault();
   dropzone.classList.remove('drag-over');
-  if (e.dataTransfer.files.length) addPhotos(e.dataTransfer.files);
+  if (e.dataTransfer.files.length) void addPhotos(e.dataTransfer.files);
 });
 dropzone.addEventListener('keydown', e => {
   if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); }
@@ -415,7 +443,6 @@ identifyBtn.addEventListener('click', async () => {
         status:     'done',
       });
     }
-    clearCollectorPhotos(getCollectorUserId()).catch(() => {});
   } catch (err) {
     if (err instanceof OfflineQueuedError) {
       // Offline — job is queued, update history entry to show queued state
@@ -711,8 +738,7 @@ mainBody.addEventListener('drop', e => {
 
 // ─── Camera modal ─────────────────────────────────────────────────
 //
-// Preference: getUserMedia live modal with shutter + switch.
-// Fallback:   native <input capture="environment"> for old browsers.
+// Capacitor uses Android's camera intent; browsers use a live getUserMedia viewfinder.
 
 /** @type {MediaStream | null} */
 let cameraStream  = null;
@@ -724,17 +750,17 @@ let facingMode    = 'environment';
 let shutterLocked = false;
 
 captureBtn.addEventListener('click', () => {
-  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-    openCameraModal();
-  } else {
+  if (window.Capacitor?.isNativePlatform?.() || !navigator.mediaDevices?.getUserMedia) {
     captureInput.click();
+  } else {
+    openCameraModal();
   }
 });
 
 // Fallback input
-captureInput.addEventListener('change', () => {
+captureInput.addEventListener('change', async () => {
   if (captureInput.files.length) {
-    addPhotos(captureInput.files);
+    await addPhotos(captureInput.files);
     captureInput.value = '';
   }
 });
@@ -819,13 +845,13 @@ cameraShutterBtn.addEventListener('click', () => {
 
   ctx.drawImage(video, 0, 0, w, h);
 
-  cameraCanvas.toBlob(blob => {
+  cameraCanvas.toBlob(async blob => {
     if (!blob) { shutterLocked = false; return; }
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const file = new File([blob], `capture-${timestamp}.jpg`, { type: 'image/jpeg' });
 
-    addPhotos([file]);
+    await addPhotos([file]);
     closeCameraModal();
     shutterLocked = false;
   }, 'image/jpeg', 0.92);
@@ -922,8 +948,9 @@ function showOnlineToast() {
         });
         renderThumb(url);
       }
-    } catch {
-      // IDB unavailable — start empty, non-fatal
+    } catch (error) {
+      console.error('Could not restore the Photo Collection.', error);
+      showToastMessage('Saved photos could not be restored on this device.', 4500);
     }
   }
   updateUI();

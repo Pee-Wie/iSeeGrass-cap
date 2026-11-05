@@ -1,12 +1,69 @@
-.git/
+# ─── Hidden / tool directories ───────────────────────────────────────────────
+.agents/
+.context/
+.freebuff/
+.gradle/
+.idea/
+.kiro/
+.vscode/
+
+# ─── Environment & secrets ────────────────────────────────────────────────────
+.env
+.env.local
+.env.railway
+.tmp-Build Logs
+.tmp-Deploy Logs
+
+# ─── Credentials & tokens ─────────────────────────────────────────────────────
+native-app/app/google-services.json
+native-app/google-services.json
+token.txt
+
+# ─── Database files (contain hashed passwords / deployment secrets) ───────────
+database/iseegrass_master_4_railway.sql
+database/migration/iseegrass_master-seed+mig.sql
+database/seed/users.seed.sql
+database/seed/users.seed.users.seed.sql
+
+# ─── Directories not part of the web/app source ───────────────────────────────
+App-Build History/
 android/
+!/android/
+android/*
+!/android/app/
+android/app/*
+!/android/app/src/
+android/app/src/*
+!/android/app/src/main/
+android/app/src/main/*
+!/android/app/src/main/java/
+android/app/src/main/java/*
+!/android/app/src/main/java/com/
+android/app/src/main/java/com/*
+!/android/app/src/main/java/com/iseegrass/
+android/app/src/main/java/com/iseegrass/*
+!/android/app/src/main/java/com/iseegrass/app/
+android/app/src/main/java/com/iseegrass/app/*
+!/android/app/src/main/java/com/iseegrass/app/MainActivity.java
 assets/guides/
+backup/
+docker/
+iSeeGrass--CNN-v0.02/
+iSeeGrass-cap (symlink)
+iSeeGrass-na (symlink)
+iSeeGrass_CNN (symlink)
 node_modules/
 
-.env
-.env.railway
-capacitor.config.json
-package.json
-package-lock.json
-gitguide.md
+# ─── native-app: build cache, secrets, and local config only ─────────────────
+native-app/.gradle/
+native-app/app/build/
+native-app/app/src/
+native-app/local.properties
+
+# ─── Build & generated files ──────────────────────────────────────────────────
 nohup.out
+package-lock.json
+
+# ─── Docs / personal notes ────────────────────────────────────────────────────
+gitguide.md
+notes.txt

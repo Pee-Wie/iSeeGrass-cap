@@ -47,15 +47,10 @@ function sessionLifetimeSeconds(): int
  */
 function setSessionCookie(string $token, int $lifetime = 0): void
 {
-    $secure   = filter_var(env('SESSION_SECURE', 'false'), FILTER_VALIDATE_BOOLEAN);
+    $capacitorOrigin = isCapacitorOrigin();
+    $secure   = $capacitorOrigin || filter_var(env('SESSION_SECURE', 'false'), FILTER_VALIDATE_BOOLEAN);
     $expires  = $lifetime > 0 ? time() + $lifetime : 0;
-
-    // SameSite=Lax works correctly in Android WebView (Capacitor) and persists
-    // across app restarts. SameSite=None requires the cookie to be sent with
-    // every cross-site request and is NOT reliably persisted by Android's
-    // WebView CookieManager across process kills — causing spurious logouts.
-    // Lax is the safe default for both mobile WebView and standard browsers.
-    $sameSite = 'Lax';
+    $sameSite = $capacitorOrigin ? 'None' : 'Lax';
 
     setcookie(sessionCookieName(), $token, [
         'expires'  => $expires,
@@ -72,14 +67,20 @@ function setSessionCookie(string $token, int $lifetime = 0): void
  */
 function clearSessionCookie(): void
 {
+    $capacitorOrigin = isCapacitorOrigin();
     setcookie(sessionCookieName(), '', [
         'expires'  => time() - 3600,
         'path'     => '/',
         'domain'   => '',
-        'secure'   => false,
+        'secure'   => $capacitorOrigin || filter_var(env('SESSION_SECURE', 'false'), FILTER_VALIDATE_BOOLEAN),
         'httponly' => true,
-        'samesite' => 'Lax',
+        'samesite' => $capacitorOrigin ? 'None' : 'Lax',
     ]);
+}
+
+function isCapacitorOrigin(): bool
+{
+    return in_array($_SERVER['HTTP_ORIGIN'] ?? '', ['https://localhost', 'capacitor://localhost'], true);
 }
 
 /**
