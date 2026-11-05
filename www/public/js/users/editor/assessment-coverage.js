@@ -114,8 +114,8 @@ function renderSuggestions(cell) {
     return;
   }
 
-  const query = currentEntry(cell).replace(/\(\s*\d*\s*\)$/, '').trim().toLocaleLowerCase();
-  if (/\(\s*\d+\s*\)$/.test(currentEntry(cell))) {
+  const query = currentEntry(cell).replace(/\s+\d+$/, '').trim().toLocaleLowerCase();
+  if (/\s+\d+$/.test(currentEntry(cell))) {
     hideSuggestions();
     return;
   }
@@ -198,7 +198,7 @@ function selectSuggestion(index) {
   const current = cell.innerText || cell.textContent || '';
   const delimiter = Math.max(current.lastIndexOf(','), current.lastIndexOf(';'), current.lastIndexOf('\n'));
   const prefix = delimiter < 0 ? '' : `${current.slice(0, delimiter + 1)} `;
-  cell.textContent = `${prefix}${species.scientificName}(1)`;
+  cell.textContent = `${prefix}${species.scientificName} 1`;
   const range = document.createRange();
   range.selectNodeContents(cell);
   range.collapse(false);
@@ -216,13 +216,13 @@ function parseSpeciesEntries(value) {
 
   const entriesByName = new Map();
   for (const rawPart of text.split(/[,;\n]+/).map(part => part.trim()).filter(Boolean)) {
-    const match = rawPart.match(/^(.+?)\s*(?:\(\s*(\d+)\s*\)|[:=]\s*(\d+))$/);
+    const match = rawPart.match(/^(.+?)\s+(\d+)$/);
     if (!match) {
-      return { entries: [], error: `Use name/code(count), for example HP(3): "${rawPart}"` };
+      return { entries: [], error: `Use a species name/code followed by a count, for example CR 2: "${rawPart}"` };
     }
 
     const name = match[1].trim();
-    const count = Number(match[2] ?? match[3]);
+    const count = Number(match[2]);
     if (!name || !Number.isSafeInteger(count) || count < 0) {
       return { entries: [], error: `Enter a valid non-negative whole-number count for "${name}".` };
     }
