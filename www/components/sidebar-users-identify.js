@@ -1,4 +1,5 @@
 import { assetUrl } from '../public/js/config/api.config.js';
+import { cleanSpeciesLabel } from '../public/js/utils/species-labels.js';
 
 /**
  * <isee-identify-history> — Identification History Sidebar
@@ -239,7 +240,7 @@ class ISeeIdentifyHistory extends HTMLElement {
           // Refresh the card in place — e.g. title may have changed
           Object.assign(existing, {
             thumbUrl:   assetUrl(rec.image_url),
-            topSpecies: rec.top_result    ?? '—',
+            topSpecies: cleanSpeciesLabel(rec.top_result) || '—',
             confidence: rec.top_confidence ?? 0,
             title:      rec.title ?? null,
             status:     'done',
@@ -298,7 +299,7 @@ class ISeeIdentifyHistory extends HTMLElement {
                     : Date.now(),
       fileName:   rec.image_filename ?? '(unknown)',
       thumbUrl:   assetUrl(rec.image_url),
-      topSpecies: rec.top_result    ?? '—',
+      topSpecies: cleanSpeciesLabel(rec.top_result) || '—',
       confidence: rec.top_confidence ?? 0,
       title:      rec.title ?? null,
       status:     'done',
@@ -510,7 +511,7 @@ class ISeeIdentifyHistory extends HTMLElement {
 
     const shortName = this._truncateName(entry.fileName);
     const species   = entry.status === 'done'
-      ? (entry.topSpecies || '—')
+      ? (cleanSpeciesLabel(entry.topSpecies) || '—')
       : entry.status === 'error'
         ? (entry.errorMsg || 'Identification failed')
         : entry.status === 'queued'

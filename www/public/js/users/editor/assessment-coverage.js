@@ -1,5 +1,6 @@
 import { listUserIdentificationHistory } from '../../api/identify.api.js';
 import { SEAGRASS_SPECIES } from '../../species-data.js';
+import { cleanSpeciesLabel } from '../../utils/species-labels.js';
 
 const HISTORY_LIMIT = 50;
 const SUGGESTION_LIMIT = 8;
@@ -49,12 +50,13 @@ function speciesFromHistory(records) {
   const seen = new Set();
   return records
     .map(record => {
-      const scientificName = String(record.top_result || '').trim();
+      const scientificName = cleanSpeciesLabel(record.top_result);
       if (!scientificName || /background|unknown|not identified/i.test(scientificName)) return null;
       const species = catalogSpecies(scientificName);
+      if (!species) return null;
       return {
-        scientificName: species?.scientificName || scientificName,
-        commonName: species?.commonName || '',
+        scientificName: species.scientificName,
+        commonName: species.commonName,
         source: 'history',
       };
     })

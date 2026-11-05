@@ -20,6 +20,7 @@
 
 import { identifyImage, findCatalogMatch } from '../../api/identify.api.js';
 import { drain, OfflineQueuedError } from '../../utils/identify-queue.js';
+import { cleanSpeciesLabel } from '../../utils/species-labels.js';
 import { saveCollectorPhoto, updateCollectorPhotoLabel, removeCollectorPhoto, clearCollectorPhotos, restoreCollectorPhotos } from '../../utils/photo-collector-store.js';
 import { assetUrl } from '../../config/api.config.js';
 
@@ -1196,7 +1197,7 @@ document.addEventListener('isee:load-hist-result', (e) => {
 // ─── Render identification results ────────────────────────────────────────────
 
 /** Labels that indicate a background / no-seagrass result. */
-const BACKGROUND_RE = /background/i;
+const BACKGROUND_RE = /background|species not identified/i;
 
 /**
  * Confidence threshold below which a result is flagged as uncertain.
@@ -1247,7 +1248,7 @@ function renderIdentifyResults(result) {
     mainBody.after(container);
   }
 
-  const topResult    = result.top_result || 'Unknown';
+  const topResult    = cleanSpeciesLabel(result.top_result) || 'Unknown';
   const isBackground = BACKGROUND_RE.test(topResult);
   const rawTopConf   = result.scores?.[0]?.confidence ?? result.top_confidence ?? 0;
   const isLowConf    = rawTopConf < LOW_CONFIDENCE_THRESHOLD;
@@ -1340,7 +1341,10 @@ function renderIdentifyResults(result) {
   const topConf = capConfidence(rawTopConf);
 
   // Admin sees all scores with bars; users see species-only scores, no bars
-  const allScores  = result.scores || [];
+  const allScores  = (result.scores || []).map(score => ({
+    ...score,
+    label: cleanSpeciesLabel(score.label),
+  }));
   const filteredScores = IS_ADMIN
     ? allScores
     : allScores.filter(s => !BACKGROUND_RE.test(s.label));
@@ -1448,6 +1452,7 @@ function renderIdentifyResults(result) {
  * @param {string} topResult  The model's top species name (or background class)
  */
 async function fetchAndRenderCatalogMatch(topResult) {
+  topResult = cleanSpeciesLabel(topResult);
   // Clear any previous card first (handles re-identification)
   document.getElementById('speciesCatalogCard')?.remove();
 

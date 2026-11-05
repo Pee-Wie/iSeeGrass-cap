@@ -7,6 +7,7 @@
  */
 
 import { identifyImage, findCatalogMatch } from '../api/identify.api.js';
+import { cleanSpeciesLabel } from '../utils/species-labels.js';
 
 const MAX_PHOTOS = 12;
 const MAX_BYTES  = 5 * 1024 * 1024; // 5 MB
@@ -767,7 +768,7 @@ function renderIdError(message) {
 // ── Success state ────────────────────────────────────────────────────────────
 
 /** Labels that indicate a background / no-seagrass result. */
-const BACKGROUND_RE = /background/i;
+const BACKGROUND_RE = /background|species not identified/i;
 
 /**
  * Confidence threshold below which a result is flagged as uncertain.
@@ -796,7 +797,8 @@ function capConfidence(pct) {
  * @param {{ identification_id:number|null, model_type:string, top_result:string, top_confidence:number, scores:Array }} result
  */
 function renderIdResults(result) {
-  const { top_result, top_confidence, scores, model_type } = result;
+  const { top_confidence, scores, model_type } = result;
+  const top_result = cleanSpeciesLabel(result.top_result) || 'Unknown';
   const c = getOrCreateResultsContainer();
 
   const isBackground = BACKGROUND_RE.test(top_result);
@@ -881,6 +883,7 @@ function renderIdResults(result) {
  * @param {string} topResult  The model's top species name (or background class)
  */
 async function fetchAndRenderCatalogMatch(topResult) {
+  topResult = cleanSpeciesLabel(topResult);
   // Clear any previous card first (handles re-identification)
   document.getElementById('speciesCatalogCard')?.remove();
 
