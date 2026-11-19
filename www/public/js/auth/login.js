@@ -293,6 +293,17 @@ function wireSignupForm() {
         position   : 'Student',   // default for self-registration; user can update in profile
       });
 
+      if (user.status !== 'active') {
+        form.hidden = true;
+        const notice = document.createElement('p');
+        notice.className = 'signup-pending-notice';
+        notice.setAttribute('role', 'status');
+        notice.textContent =
+          'Your account request has been received and is pending administrator approval. You can sign in after an administrator activates your account.';
+        form.after(notice);
+        return;
+      }
+
       // Store session data and redirect
       localStorage.setItem('isee_user', JSON.stringify({
         id         : user.id,
