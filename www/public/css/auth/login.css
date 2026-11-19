@@ -509,6 +509,24 @@ body::before {
   line-height: 1.6;
 }
 
+@media (max-width: 768px) {
+  .modal-overlay {
+    padding: 0.75rem;
+  }
+
+  .modal-content {
+    width: 100%;
+    max-height: calc(100vh - 1.5rem);
+    padding: 1.25rem;
+  }
+
+  @supports (height: 100dvh) {
+    .modal-content {
+      max-height: calc(100dvh - 1.5rem);
+    }
+  }
+}
+
 .modal-body .text {
   margin-top: 16px;
 }

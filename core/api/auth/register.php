@@ -12,6 +12,9 @@ requireMethod('POST');
 $body   = getJsonBody();
 $errors = requireFields($body, ['username','email','password','first_name','last_name','position']);
 if ($errors) jsonError(implode(' ', $errors), 422);
+if (($body['terms_accepted'] ?? false) !== true) {
+    jsonError('You must agree to the Terms and Conditions and acknowledge the Privacy and Cookie Policies.', 422);
+}
 
 $username  = trim((string)($body['username']  ?? ''));
 $email     = strtolower(trim((string)($body['email'] ?? '')));

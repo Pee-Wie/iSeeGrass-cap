@@ -291,6 +291,7 @@ function wireSignupForm() {
         first_name : firstName,
         last_name  : lastName,
         position   : 'Student',   // default for self-registration; user can update in profile
+        terms_accepted: document.getElementById('signup-terms')?.checked === true,
       });
 
       if (user.status !== 'active') {
