@@ -179,10 +179,27 @@ function renderSuggestions(cell) {
 function positionSuggestions(cell) {
   if (suggestionList.hidden || !cell?.isConnected) return;
   const rect = cell.getBoundingClientRect();
-  const width = Math.min(360, Math.max(220, rect.width), Math.max(180, window.innerWidth - 16));
+  const viewport = window.visualViewport;
+  const viewportLeft = viewport?.offsetLeft || 0;
+  const viewportTop = viewport?.offsetTop || 0;
+  const viewportWidth = viewport?.width || window.innerWidth;
+  const viewportHeight = viewport?.height || window.innerHeight;
+  const viewportRight = viewportLeft + viewportWidth;
+  const viewportBottom = viewportTop + viewportHeight;
+  const availableWidth = Math.max(0, viewportWidth - 16);
+  const width = Math.min(360, availableWidth, Math.max(Math.min(220, availableWidth), rect.width));
+  const availableAbove = Math.max(0, rect.top - viewportTop - 8);
+  const availableBelow = Math.max(0, viewportBottom - rect.bottom - 8);
+  const placeAbove = availableAbove > availableBelow;
+
   suggestionList.style.width = `${width}px`;
-  suggestionList.style.left = `${Math.max(8, Math.min(rect.left, window.innerWidth - width - 8))}px`;
-  suggestionList.style.top = `${Math.max(8, Math.min(rect.bottom, window.innerHeight - suggestionList.offsetHeight - 8))}px`;
+  suggestionList.style.left = `${Math.max(viewportLeft + 8, Math.min(rect.left, viewportRight - width - 8))}px`;
+  suggestionList.style.maxHeight = `${Math.min(260, placeAbove ? availableAbove : availableBelow)}px`;
+
+  const listHeight = suggestionList.offsetHeight;
+  suggestionList.style.top = placeAbove
+    ? `${Math.max(viewportTop + 8, rect.top - listHeight - 4)}px`
+    : `${Math.min(viewportBottom - listHeight - 8, rect.bottom + 4)}px`;
 }
 
 function hideSuggestions() {
@@ -376,6 +393,15 @@ if (canvas) {
 
   canvas.addEventListener('click', event => {
     const cell = event.target.closest?.('[data-coverage-species-entry]');
+    if (cell) {
+      renderSuggestions(cell);
+      requestAnimationFrame(() => positionSuggestions(cell));
+    }
+  });
+
+  canvas.addEventListener('focusin', event => {
+    const cell = event.target.closest?.('[data-coverage-species-entry]')
+      || getActiveCoverageCell();
     if (cell) renderSuggestions(cell);
   });
 
@@ -404,6 +430,8 @@ if (canvas) {
 
   window.addEventListener('resize', () => positionSuggestions(activeCell));
   window.addEventListener('scroll', () => positionSuggestions(activeCell), true);
+  window.visualViewport?.addEventListener('resize', () => positionSuggestions(activeCell));
+  window.visualViewport?.addEventListener('scroll', () => positionSuggestions(activeCell));
 
   new MutationObserver(updateCoverageTables).observe(canvas, { childList: true, subtree: true });
   updateCoverageTables();
