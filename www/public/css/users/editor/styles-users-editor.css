@@ -749,8 +749,8 @@
 }
 
 .editor-canvas table[data-assessment-transect] {
-  width: 1730px;
-  min-width: 1730px;
+  width: 1880px;
+  min-width: 1880px;
   table-layout: fixed;
 }
 
@@ -774,6 +774,8 @@
 .editor-canvas table[data-assessment-transect] td:nth-child(9) { width: 180px; }
 .editor-canvas table[data-assessment-transect] th:nth-child(10),
 .editor-canvas table[data-assessment-transect] td:nth-child(10) { width: 190px; }
+.editor-canvas table[data-assessment-transect] th:nth-child(11),
+.editor-canvas table[data-assessment-transect] td:nth-child(11) { width: 150px; }
 
 .editor-canvas table[data-assessment-transect] th,
 .editor-canvas table[data-assessment-transect] td {
@@ -781,7 +783,8 @@
 }
 
 .editor-canvas [data-coverage-species-entry],
-.editor-canvas [data-coverage-total] {
+.editor-canvas [data-coverage-total],
+.editor-canvas [data-coverage-location] {
   background: #fffbea;
 }
 

@@ -23,6 +23,7 @@ import { drain, OfflineQueuedError } from '../../utils/identify-queue.js';
 import { cleanSpeciesLabel } from '../../utils/species-labels.js';
 import { saveCollectorPhoto, updateCollectorPhotoLabel, removeCollectorPhoto, clearCollectorPhotos, restoreCollectorPhotos } from '../../utils/photo-collector-store.js';
 import { assetUrl } from '../../config/api.config.js';
+import { openManualIdentificationDialog } from './manual-identification-key.js?v=1';
 
 function getCollectorUserId() {
   try {
@@ -1290,6 +1291,7 @@ function renderIdentifyResults(result) {
       <div id="flagResultForm" class="flag-result-form" hidden>
         <div class="flag-result-form__title">Flag this result</div>
         <p class="flag-result-form__desc">Tell us what you actually observed (optional). This helps improve the model.</p>
+        <button id="btnFlagManualKey" class="flag-result-form__manual-key" type="button">Use manual identification key</button>
         <div class="flag-result-form__row">
           <label class="flag-result-form__label" for="flagCorrection">What species did you see?</label>
           <input id="flagCorrection" class="flag-result-form__input" type="text"
@@ -1411,6 +1413,7 @@ function renderIdentifyResults(result) {
     <div id="flagResultForm" class="flag-result-form" hidden>
       <div class="flag-result-form__title">Flag this result</div>
       <p class="flag-result-form__desc">Tell us what you actually observed (optional). This helps improve the model.</p>
+      <button id="btnFlagManualKey" class="flag-result-form__manual-key" type="button">Use manual identification key</button>
       <div class="flag-result-form__row">
         <label class="flag-result-form__label" for="flagCorrection">What species did you see?</label>
         <input id="flagCorrection" class="flag-result-form__input" type="text"
@@ -1568,10 +1571,21 @@ function _wireResultFlag({ identificationId, modelPrediction, modelConfidence })
   const btnSubmit = document.getElementById('btnFlagSubmit');
   const btnCancel = document.getElementById('btnFlagCancel');
   const msgEl     = document.getElementById('flagFormMsg');
+  const manualKeyButton = document.getElementById('btnFlagManualKey');
+  const correctionInput = document.getElementById('flagCorrection');
 
   if (!btn || !form) return;
 
   let flagged = false;
+
+  manualKeyButton?.addEventListener('click', () => {
+    openManualIdentificationDialog({
+      onSelect: outcome => {
+        correctionInput.value = outcome.scientificName;
+        correctionInput.focus();
+      },
+    });
+  });
 
   // Toggle form open/close
   btn.addEventListener('click', () => {
