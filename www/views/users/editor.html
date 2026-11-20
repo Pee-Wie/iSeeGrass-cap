@@ -354,12 +354,18 @@
                     <i class="ti ti-table-plus"></i> Insert Transect Table
                   </button>
                   <button class="btn btn-secondary" id="btnImport" type="button"
-                    title="Import an existing HTML or text document">
+                    title="Import an HTML, text, Word, or Excel document">
                     <i class="ti ti-file-import"></i> Import
                   </button>
                   <input type="file" id="importFileInput"
                     accept=".html,.htm,.txt,.docx,.xlsx" hidden
                     aria-label="Import document file">
+                  <button class="btn btn-secondary" id="btnExportWord" type="button">
+                    <i class="ti ti-file-type-doc"></i> Export Word
+                  </button>
+                  <button class="btn btn-secondary" id="btnExportExcel" type="button">
+                    <i class="ti ti-file-type-xls"></i> Export Excel
+                  </button>
                   <button class="btn btn-secondary" id="btnPrint" type="button">
                     <i class="ti ti-printer"></i> Print
                   </button>
@@ -548,6 +554,8 @@
   <!-- Custom modal utility — must load before editor script -->
   <script type="module" src="../../components/modal-utils.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/js/tabler.min.js"></script>
+  <script src="../../public/js/vendor/fflate.js"></script>
+  <script src="../../public/js/users/editor/assessment-file-io.js"></script>
   <script src="../../public/js/users/editor/script-users-editor.js"></script>
   <script type="module" src="../../public/js/users/editor/assessment-coverage.js"></script>
   <script type="module" src="../../public/js/users/editor/editor-api-sync.js"></script>

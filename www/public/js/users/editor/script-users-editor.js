@@ -96,6 +96,7 @@ const TEMPLATES = {
    ═══════════════════════════════════════════════════════════════════ */
 
 let canvas, titleInput, unsavedBadge, wordCountEl, charCountEl, cursorPosEl;
+let assessmentStatus = 'draft';
 
 /* ═══════════════════════════════════════════════════════════════════
    Utility helpers
@@ -186,51 +187,13 @@ function saveDraft() {
   document.dispatchEvent(new CustomEvent('isee:save-requested', { detail: { status: 'draft' } }));
 }
 
-/* ── Download current document as an HTML file ───────────────────── */
+/* ── Download current document as a Word file ────────────────────── */
 function downloadDocument(title, body, status) {
-  const cleanBody = body.replace(/^\s*<h1[^>]*>[\s\S]*?<\/h1>\s*/i, '');
-  const safeName = (title || 'assessment').replace(/[^a-z0-9_\-]/gi, '_').replace(/_+/g, '_');
-  const filename = `${safeName}_${status}.html`;
-
-  const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>${title || 'Assessment'}</title>
-  <style>
-    body { font-family: Calibri, Arial, sans-serif; max-width: 900px; margin: 2cm auto; padding: 0 1.5rem; color: #111; font-size: 11pt; line-height: 1.5; }
-    h1 { font-size: 1.6rem; color: #1a3a1a; margin-bottom: 1.5rem; border-bottom: 2px solid #4a8c2b; padding-bottom: .5rem; }
-    h2 { font-size: 1.2rem; color: #1a3a1a; }
-    h3 { font-size: 1rem; color: #2a4a2a; }
-    table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .9rem; }
-    th, td { border: 1px solid #BFBFBF; padding: .4rem .65rem; text-align: left; }
-    th { background: #D9E1F2; font-weight: 700; }
-    tr:nth-child(even) td { background: #F2F2F2; }
-    a { color: #0563C1; }
-    img { max-width: 100%; }
-    blockquote { border-left: 3px solid #4a8c2b; margin: .5rem 0; padding: .3rem .9rem; color: #555; font-style: italic; }
-    pre { background: #f5f5f5; border: 1px solid #ddd; padding: .75rem 1rem; font-family: monospace; font-size: .85rem; }
-    .meta { font-size: .75rem; color: #888; margin-top: 2rem; border-top: 1px solid #ddd; padding-top: .75rem; }
-  </style>
-</head>
-<body>
-  <h1>${title || 'Assessment'}</h1>
-  ${cleanBody}
-  <div class="meta">
-    iSeeGrass Assessment &mdash; Status: <strong>${status.replace('-', ' ')}</strong>
-    &mdash; Exported: ${new Date().toLocaleString()}
-  </div>
-</body>
-</html>`;
-
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
+  try {
+    window.AssessmentFileIO.exportFile('docx', title, body, status);
+  } catch (error) {
+    showToast(error.message || 'Could not export the Word document.', 'error', 5000);
+  }
 }
 
 async function clearDraft() {
@@ -914,13 +877,15 @@ function wireFooter() {
   });
 
   // Save buttons dispatch events — editor-api-sync.js handles them
-  document.getElementById('btnSaveDraft')?.addEventListener('click', () =>
+  document.getElementById('btnSaveDraft')?.addEventListener('click', () => {
+    assessmentStatus = 'draft';
     document.dispatchEvent(new CustomEvent('isee:save-requested', { detail: { status: 'draft' } }))
-  );
+  });
 
-  document.getElementById('btnInProgress')?.addEventListener('click', () =>
+  document.getElementById('btnInProgress')?.addEventListener('click', () => {
+    assessmentStatus = 'in_progress';
     document.dispatchEvent(new CustomEvent('isee:save-requested', { detail: { status: 'in-progress' } }))
-  );
+  });
 
   document.getElementById('btnFinalize')?.addEventListener('click', () => {
     if (!titleInput?.value.trim()) {
@@ -928,10 +893,23 @@ function wireFooter() {
       titleInput?.focus();
       return;
     }
+    assessmentStatus = 'finalized';
     document.dispatchEvent(new CustomEvent('isee:save-requested', { detail: { status: 'final' } }));
   });
 
   document.getElementById('btnPrint')?.addEventListener('click', printDocument);
+  document.getElementById('btnExportWord')?.addEventListener('click', () =>
+    downloadDocument(titleInput?.value.trim() || 'Assessment', canvas?.innerHTML || '', assessmentStatus)
+  );
+  document.getElementById('btnExportExcel')?.addEventListener('click', () => {
+    try {
+      window.AssessmentFileIO.exportFile(
+        'xlsx', titleInput?.value.trim() || 'Assessment', canvas?.innerHTML || '', assessmentStatus
+      );
+    } catch (error) {
+      showToast(error.message || 'Could not export the Excel workbook.', 'error', 5000);
+    }
+  });
 
   // ── Import button ──────────────────────────────────────────────── //
   const importInput = document.getElementById('importFileInput');
@@ -943,9 +921,8 @@ function wireFooter() {
     importInput.value = '';   // reset so same file can be re-imported
 
     const ext = file.name.split('.').pop().toLowerCase();
-    const reader = new FileReader();
-
     if (ext === 'html' || ext === 'htm') {
+      const reader = new FileReader();
       reader.onload = e => {
         const parser  = new DOMParser();
         const doc     = parser.parseFromString(e.target.result, 'text/html');
@@ -958,11 +935,18 @@ function wireFooter() {
       };
       reader.readAsText(file);
     } else if (ext === 'docx' || ext === 'xlsx') {
-      // Without a server we can't decode binary Office formats,
-      // so inform the user to save/export as HTML first.
-      showToast('Please save the file as HTML (.html) first, then import.', 'error', 5000);
+      window.AssessmentFileIO.importFile(file).then(result => {
+        if (canvas) canvas.innerHTML = sanitizePaste(result.content || '');
+        if (titleInput) titleInput.value = result.title || file.name.replace(/\.[^.]+$/, '');
+        if (result.status) assessmentStatus = result.status;
+        markUnsaved(); updateCounts();
+        showToast(`Imported: ${file.name}`, 'success');
+      }).catch(error => {
+        showToast(error.message || `Could not import ${file.name}.`, 'error', 5000);
+      });
     } else {
       // Try reading as plain text
+      const reader = new FileReader();
       reader.onload = e => {
         const escaped = e.target.result
           .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
