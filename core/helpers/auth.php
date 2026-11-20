@@ -47,19 +47,8 @@ function sessionLifetimeSeconds(): int
  */
 function setSessionCookie(string $token, int $lifetime = 0): void
 {
-    $capacitorOrigin = isCapacitorOrigin();
-    $secure   = $capacitorOrigin || filter_var(env('SESSION_SECURE', 'false'), FILTER_VALIDATE_BOOLEAN);
     $expires  = $lifetime > 0 ? time() + $lifetime : 0;
-    $sameSite = $capacitorOrigin ? 'None' : 'Lax';
-
-    setcookie(sessionCookieName(), $token, [
-        'expires'  => $expires,
-        'path'     => '/',
-        'domain'   => '',
-        'secure'   => $secure,
-        'httponly' => true,
-        'samesite' => $sameSite,
-    ]);
+    setcookie(sessionCookieName(), $token, sessionCookieOptions($expires));
 }
 
 /**
@@ -67,20 +56,82 @@ function setSessionCookie(string $token, int $lifetime = 0): void
  */
 function clearSessionCookie(): void
 {
-    $capacitorOrigin = isCapacitorOrigin();
-    setcookie(sessionCookieName(), '', [
-        'expires'  => time() - 3600,
+    setcookie(sessionCookieName(), '', sessionCookieOptions(time() - 3600));
+}
+
+function sessionCookieOptions(int $expires): array
+{
+    $crossSite = usesCrossSiteSessionCookie();
+
+    return [
+        'expires'  => $expires,
         'path'     => '/',
         'domain'   => '',
-        'secure'   => $capacitorOrigin || filter_var(env('SESSION_SECURE', 'false'), FILTER_VALIDATE_BOOLEAN),
+        'secure'   => $crossSite || filter_var(env('SESSION_SECURE', 'false'), FILTER_VALIDATE_BOOLEAN),
         'httponly' => true,
-        'samesite' => $capacitorOrigin ? 'None' : 'Lax',
-    ]);
+        'samesite' => $crossSite ? 'None' : 'Lax',
+    ];
 }
 
 function isCapacitorOrigin(): bool
 {
     return in_array($_SERVER['HTTP_ORIGIN'] ?? '', ['https://localhost', 'capacitor://localhost'], true);
+}
+
+function usesCrossSiteSessionCookie(): bool
+{
+    if (isCapacitorOrigin()) {
+        return true;
+    }
+
+    $origin = trim((string) ($_SERVER['HTTP_ORIGIN'] ?? ''));
+    if ($origin === '') {
+        return false;
+    }
+
+    $appUrl = rtrim(trim((string) env('APP_URL', '')), '/');
+    if ($appUrl !== '' && !str_starts_with($appUrl, 'http')) {
+        $appUrl = 'https://' . $appUrl;
+    }
+
+    $originParts = parse_url($origin);
+    $appParts = $appUrl !== '' ? parse_url($appUrl) : false;
+    if (!is_array($originParts)) {
+        return false;
+    }
+
+    $apiHost = strtolower((string) parse_url(
+        'http://' . ($_SERVER['HTTP_HOST'] ?? ''),
+        PHP_URL_HOST
+    ));
+    $originHost = strtolower((string) ($originParts['host'] ?? ''));
+    $originScheme = strtolower((string) ($originParts['scheme'] ?? ''));
+    $originPort = $originParts['port'] ?? ($originScheme === 'https' ? 443 : 80);
+    $matchesAppUrl = false;
+
+    if (is_array($appParts)) {
+        $appHost = strtolower((string) ($appParts['host'] ?? ''));
+        $appScheme = strtolower((string) ($appParts['scheme'] ?? ''));
+        $appPort = $appParts['port'] ?? ($appScheme === 'https' ? 443 : 80);
+        $matchesAppUrl = $originHost === $appHost
+            && $originScheme === $appScheme
+            && $originPort === $appPort;
+    }
+
+    $allowedDevelopmentOrigin = in_array($origin, [
+        'http://localhost:3000',
+        'http://localhost',
+        'http://127.0.0.1',
+        'http://127.0.0.1:3000',
+    ], true);
+    $allowedRailwayOrigin = preg_match(
+        '/^https:\/\/[a-z0-9-]+\.up\.railway\.app$/',
+        $origin
+    ) === 1;
+
+    return $originHost !== ''
+        && $originHost !== $apiHost
+        && ($matchesAppUrl || $allowedDevelopmentOrigin || $allowedRailwayOrigin);
 }
 
 /**
