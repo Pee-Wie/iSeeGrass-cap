@@ -94,7 +94,7 @@
     for (const block of editorBlocks(content)) {
       if (block.type === 'table') rows.push(...block.rows);
       else if (block.type === 'hr') rows.push(['']);
-      else rows.push([block.type, block.text]);
+      else rows.push([block.text]);
     }
     return rows;
   }
